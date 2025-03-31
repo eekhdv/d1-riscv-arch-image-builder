@@ -79,7 +79,7 @@ if [ ! -f "${OUT_DIR}/u-boot-sunxi-with-spl.bin" ]; then
     DIR='u-boot'
     clean_dir ${DIR}
 
-    git clone --depth 1 "${SOURCE_UBOOT}" -b "${TAG_UBOOT}"
+    git clone --depth 1 "${SOURCE_UBOOT}" ${DIR}
     cd ${DIR}
     pin_commit "${COMMIT_UBOOT}"
 
@@ -107,8 +107,12 @@ if [ ! -f "${OUT_DIR}/Image" ] || [ ! -f "${OUT_DIR}/Image.gz" ]; then
 
     case "$KERNEL" in
     'defconfig')
+        mkdir -p ../linux-build/arch/riscv/configs/
+        cp ../../licheerv_linux_defconfig ../linux-build/arch/riscv/configs/licheerv_defconfig
+
         # generate default config
-        make ARCH="${ARCH}" O=../linux-build defconfig
+        make ARCH="${ARCH}" O=../linux-build licheerv_defconfig
+
 
         # patch necessary options
         # patch_config LOCALVERSION_AUTO n #### not necessary with a release kernel
@@ -117,6 +121,22 @@ if [ ! -f "${OUT_DIR}/Image" ] || [ ! -f "${OUT_DIR}/Image.gz" ]; then
         patch_config CFG80211 m
 
         # There is no LAN, so let there be USB-LAN
+        patch_config CRYPTO_USER_API_HASH y
+        patch_config CRYPTO_USER_API_SKCIPHER y
+        patch_config CRYPTO_USER_API_RNG y
+        patch_config CRYPTO_USER_API_AEAD y
+        patch_config CRYPTO_USER_API_HASH y
+        patch_config CRYPTO_USER_API_SKCIPHER y
+        patch_config KEY_DH_OPERATIONS y
+        patch_config CRYPTO_ECB y
+        patch_config CRYPTO_MD5 y
+        patch_config CRYPTO_CBC y
+        patch_config CRYPTO_AES y
+        patch_config CRYPTO_DES y
+        patch_config CRYPTO_CMAC y
+        patch_config CRYPTO_HMAC y
+        patch_config CRYPTO_SHA1 y
+
         patch_config USB_NET_DRIVERS m
         patch_config USB_CATC m
         patch_config USB_KAWETH m
