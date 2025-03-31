@@ -41,9 +41,10 @@ Run `2_create_sd.sh /dev/<device>` to flash everything on the SD card.
 
 There are 2 ways to configure Archlinux:
 
-### Setup directly on the board
+### 1st Way. Setup directly on the board
 
 #### Prerequisite
+
 1. Mount the system from the SD card with Archlinux (it will be on the 2nd partition)
     ```sh 
     sudo mount /def/<device>[p]2 ./mnt
@@ -56,23 +57,26 @@ There are 2 ways to configure Archlinux:
     ```sh 
     sudo umount ./mnt
     ```
-4. Insert the SD card into the board. Run ArchLinux
-5. Install NetworkManager
+
+#### Setting up the board
+
+1. Insert the SD card into the board. Run ArchLinux
+2. Install NetworkManager
     ```sh
     cd /root/netwokmanager
     pacman -U ./*.zst
     ```
-6. Connect to the internet using `nmtui`
-7. Set up time 
+3. Connect to the internet using `nmtui`
+4. Set up time 
     ```sh
     timedatectl set-ntp true
     ```
-8. Synchronize packages
+5. Synchronize packages
     ```sh
     pacman -Sy --disable-sandbox
     ```
 
-### Setup using `arch-chroot`
+### 2nd Way. Setup using `arch-chroot`
 The second script requires `arch-install-scripts`, `qemu-user-static-bin` (AUR) and `binfmt-qemu-static` (AUR) for an architectural chroot.
 If you don't want to use/do this, change `USE_CHROOT` to `0` in `consts.sh`.  
 
