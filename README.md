@@ -4,53 +4,93 @@ These scripts compile, copy, bake, unpack and flash a [ready](https://wiki.archl
 
 Special thanks to **smaeul** for all their work!
 
-Find a **precompiled image** under the [Actions](https://github.com/sehraf/riscv-arch-image-builder/actions) artifacts. The image has _no_ configuration or whatsoever!
-
-Also have a look at the forks that have emerged over time or similar projects like a [make file based approch](https://github.com/hyx0329/riscv-archlinux-d1).
-
-## Starfive Vision 2
-There are multiple sources for an Archlinux image:
-- https://forum.rvspace.org/t/arch-linux-image-for-visionfive-2/1459
-- https://github.com/thefossguy/archlinux-visionfive2
 
 ## Components
 - mainline OpenSBI
-- U-Boot based on https://github.com/smaeul/u-boot.git
+- U-Boot based on https://github.com/eekhdv/u-boot_sunxi_licheerv
 - mainline kernel
 - WiFi driver (rtl8723ds) based on https://github.com/lwfinger/rtl8723ds
-- RootFS based on https://archriscv.felixc.at (root password is ~~`sifive`~~ `archriscv`)
+- RootFS based on https://archriscv.felixc.at
 
-## How to build on ArchLinux
-1. Install requirements: `pacman -Sy riscv64-linux-gnu-gcc swig cpio python3 python-setuptools base-devel bc`
-   1. If you want to `chroot` into the RISC-V image, you also need `arch-install-scripts qemu-user-static qemu-user-static-binfmt`
-1. Edit `consts.sh` to your needs. For example, you may want to select a [different DTB](https://github.com/sehraf/riscv-arch-image-builder/blob/5c450da98d578617781ae13f9d2b0850a61b21c4/consts.sh#L22) for a different board variant.
-1. Run `1_compile.sh` which compiles everything into the `output` folder.
-1. Run `2_create_sd.sh /dev/<device>` to flash everything on the SD card.
-1. Configure your Archlinux :rocket:
+## How to build
+### 1. Install requirements: 
 
-## How to build on Debian
-1. Install requirements: `apt install -y gcc-riscv64-linux-gnu bison flex python3-dev libssl-dev swig cpio python3-setuptools build-essential bc`
-   1. If you want to `chroot` into the RISC-V image, you also need `arch-install-scripts qemu-user-static`
-1. Edit `consts.sh` to your needs. For example, you may want to select a [different DTB](https://github.com/sehraf/riscv-arch-image-builder/blob/5c450da98d578617781ae13f9d2b0850a61b21c4/consts.sh#L22) for a different board variant.
-1. Run `1_compile.sh` which compiles everything into the `output` folder.
-1. Run `2_create_sd.sh /dev/<device>` to flash everything on the SD card.
-1. Configure your Archlinux :rocket:
+#### For Archlinux
+```sh
+pacman -Sy riscv64-linux-gnu-gcc swig cpio python3 python-setuptools base-devel bc
+```
+* If you want to `chroot` into the RISC-V image, you also need `arch-install-scripts qemu-user-static qemu-user-static-binfmt`
+
+#### For Debian
+```sh
+apt install -y gcc-riscv64-linux-gnu bison flex python3-dev libssl-dev swig cpio python3-setuptools build-essential bc
+```
+* If you want to `chroot` into the RISC-V image, you also need `arch-install-scripts qemu-user-static`
+
+### 2. Compile
+
+1. Edit `consts.sh` to your needs.
+2. Run `1_compile.sh` which compiles everything into the `output` folder.
+
+### 3. Burn Image
+Run `2_create_sd.sh /dev/<device>` to flash everything on the SD card.
+
+**(root password is `archriscv`)**
+
+## Configure your Archlinux
+
+There are 2 ways to configure Archlinux:
+
+### Setup directly on the board
+
+#### Prerequisite
+1. Mount the system from the SD card with Archlinux (it will be on the 2nd partition)
+    ```sh 
+    sudo mount /def/<device>[p]2 ./mnt
+    ```
+2. Copy the `networkmanager` folder to the system
+    ```sh 
+    sudo cp -r ./networkmanager ./mnt/root
+    ```
+3. Umount the mounted system
+    ```sh 
+    sudo umount ./mnt
+    ```
+4. Insert the SD card into the board. Run ArchLinux
+5. Install NetworkManager
+    ```sh
+    cd /root/netwokmanager
+    pacman -U ./*.zst
+    ```
+6. Connect to the internet using `nmtui`
+7. Set up time 
+    ```sh
+    timedatectl set-ntp true
+    ```
+8. Synchronize packages
+    ```sh
+    pacman -Sy --disable-sandbox
+    ```
+
+### Setup using `arch-chroot`
+The second script requires `arch-install-scripts`, `qemu-user-static-bin` (AUR) and `binfmt-qemu-static` (AUR) for an architectural chroot.
+If you don't want to use/do this, change `USE_CHROOT` to `0` in `consts.sh`.  
 
 ## Using loop image file instead of a SD card
 Simply loop it using `sudo losetup -f -P <file>` and then use `/dev/loopX` as the target device.
 
 ## Notes
-The second script requires `arch-install-scripts`, `qemu-user-static-bin` (AUR) and `binfmt-qemu-static` (AUR) for an architectural chroot.
-If you don't want to use/do this, change `USE_CHROOT` to `0` in `consts.sh`.  
-*Keep in mind, that this is just a extracted rootfs with **no** configuration. You probably want to update the system, install an editor and take care of network access/ssh*
-
-Some commits are pinned, this means that in the future this script might stop working since often a git HEAD is checked out. This is intentional.
-
-The second script uses `sudo` for root access. Like any random script from a random stranger from the internet, have a look at the code first and use at own risk!
-
-Things are rebuild whenever the corresponding `output/<file>` is missing. For example, the kernel is rebuilt when there is no `Image` file.
+* *Keep in mind, that this is just a extracted rootfs with **no** configuration. You probably want to update the system, install an editor and take care of network access/ssh*
+* Some commits are pinned, this means that in the future this script might stop working since often a git HEAD is checked out. This is intentional.
+* The second script uses `sudo` for root access. Like any random script from a random stranger from the internet, have a look at the code first and use at own risk!
+* Things are rebuild whenever the corresponding `output/<file>` is missing. For example, the kernel is rebuilt when there is no `Image` file.
 
 # Status
+
+## (eekhdv) 31.03.2025
+- update rootfs version
+- add instruction for setting up without chroot
+- change u-boot base
 
 ## 25.07.2023
 - forgot to keep this up to date...
@@ -88,8 +128,3 @@ Things are rebuild whenever the corresponding `output/<file>` is missing. For ex
     - With the [licheerv_linux_defconfig](https://andreas.welcomes-you.com/media/files/licheerv_linux_defconfig) from [here](https://andreas.welcomes-you.com/boot-sw-debian-risc-v-lichee-rv/) the kernel fails to find the sd card (or its partitions? not sure what exactly goes wrong)
 - HDMI is not working (at least on the one screen i've tested it)
 
-
-# Problems
-## 06.04.2022
-- ~no WiFi!~
-- ~No HDMI (though, i'm unsure about the state of HDMI support in general)~
