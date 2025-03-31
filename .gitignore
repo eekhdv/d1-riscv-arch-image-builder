@@ -1,4 +1,4 @@
 build/*
 mnt/*
 output/*
-archriscv-20210601.tar.zst
+archriscv-*
